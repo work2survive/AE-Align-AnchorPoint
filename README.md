@@ -35,8 +35,9 @@ Moving an anchor point natively in After Effects shifts the layer's visual posit
    - Dedicated 9-button grid (`Top-Left`, `Center`, `Bot-Right`, etc.) for one-click alignment.
 
 5. **Dual Execution Modes**:
+   - **One-Time Static Bake (Default)**: Instantly calculates exact compensation once and sets static numeric values on Anchor Point and Position without any continuous expression runtime overhead.
    - **Live Dynamic Expressions**: Anchor point and position remain continuously reactive to text edits, font size changes, and content resizing.
-   - **One-Time Static Bake**: Instantly applies static coordinates without active expressions running in the timeline.
+   - **Visual Expression Management**: Clear Expressions button (`✕ Clear Expressions`) is directly coupled alongside Dynamic Expressions within the Execution Engine panel for immediate cleanup.
 
 ---
 
@@ -65,10 +66,11 @@ Moving an anchor point natively in After Effects shifts the layer's visual posit
 │ [ Mid-Left   ]  [ Center     ]  [ Mid-Right   ]        │
 │ [ Bot-Left   ]  [ Bot-Center ]  [ Bot-Right   ]        │
 ├────────────────────────────────────────────────────────┤
-│ Execution Mode:                                        │
-│ (•) Live Dynamic Expressions  ( ) One-Time Static Bake │
+│ Execution Engine:                                      │
+│ (•) One-Time Static Bake (No Expressions - Default)    │
+│ ( ) Dynamic Expressions (Live)   [ ✕ Clear Expressions]│
+├────────────────────────────────────────────────────────┤
 │ [ ⚓ Align Anchor Point (Zero Visual Shift)           ] │
-│ [ ✕ Clear Expressions                                ] │
 │ Ready.                                                 │
 │ GitHub: work2survive/AE-Align-AnchorPoint              │
 └────────────────────────────────────────────────────────┘
