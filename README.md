@@ -36,14 +36,10 @@ Moving an anchor point natively in After Effects shifts the layer's visual posit
    - Stores the active alignment parameters directly on the layer using standard After Effects effect controls (`Anchor Align X`, `Anchor Align Y`, `Anchor Bounds Mode`, `Anchor Base Point`).
    - Selecting a previously aligned layer automatically restores and reflects its alignment settings in the UI.
 
-5. **Intelligent Dummy Box Text Generation & Updating**:
-   - If nothing is selected when an alignment button is clicked, the tool automatically spawns a centered dummy paragraph text box in the viewport and applies the selected alignment.
-   - If a layer is already selected, clicking any preset immediately updates the existing layer's anchor alignment in place.
-
-6. **Quick 3x3 Preset Visual Matrix**:
+5. **Quick 3x3 Preset Visual Matrix**:
    - Dedicated 9-button grid (`Top-Left`, `Center`, `Bot-Right`, etc.) for one-click alignment.
 
-7. **Dual Execution Modes**:
+6. **Dual Execution Modes**:
    - **Live Dynamic Expressions**: Anchor point and position remain continuously reactive to text edits, font size changes, and content resizing.
    - **One-Time Static Bake**: Instantly applies static coordinates without active expressions running in the timeline.
 
@@ -57,7 +53,7 @@ Moving an anchor point natively in After Effects shifts the layer's visual posit
 │ Zero-Shift Anchor Aligner with State Effect & Reticle  │
 ├────────────────────────────────────────────────────────┤
 │ Target Selection:                                      │
-│ 'Dummy_Box_Text' [Text Layer, Anchor: 230, 90]         │
+│ 'Title_Text' [Text Layer, Anchor: 230, 90]             │
 │ [ 🔄 Refresh Selection ]                                │
 ├────────────────────────────────────────────────────────┤
 │ Bounds Calculation Method:                             │
@@ -82,8 +78,7 @@ Moving an anchor point natively in After Effects shifts the layer's visual posit
 │ Execution Mode:                                        │
 │ (•) Live Dynamic Expressions  ( ) One-Time Static Bake │
 │ [ ⚓ Align Anchor Point (Keep Content in Place)       ] │
-│ [ 📝 Create Dummy Box Text in Center                ] │
-│ [ 🧹 Remove Anchor Cross Reticle                     ] │
+│ [ ✕ Remove Crosshairs & Expressions                  ] │
 │ Ready.                                                 │
 │ GitHub: work2survive/AE-Align-AnchorPoint              │
 └────────────────────────────────────────────────────────┘
