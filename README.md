@@ -27,19 +27,14 @@ Moving an anchor point natively in After Effects shifts the layer's visual posit
    - **`sourceRectAtTime(time, false)`**: Dynamically measures the exact rendered bounding box of glyphs, ascenders, descenders, and vector paths.
    - **Stated Width & Height**: Aligns to declared paragraph box text dimensions (`boxTextSize`), solid sizes (`layer.width`, `layer.height`), or precomp canvas dimensions (`source.width`, `source.height`).
 
-3. **Guideline Vector Crosshair Reticle**:
-   - Creates a procedural vector crosshair reticle linked as a child layer at position `[0, 0]` with anchor point `[0, 0]`.
-   - Automatically follows the parent layer's anchor point through all movements, rotations, and scales.
-   - Marked as a guide layer (`guideLayer = true`): clearly visible in the composition working viewer, but completely non-renderable in production renders, Adobe Media Encoder, and nested precompositions.
-
-4. **Layer State Persistence**:
+3. **Layer State Persistence**:
    - Stores the active alignment parameters directly on the layer using standard After Effects effect controls (`Anchor Align X`, `Anchor Align Y`, `Anchor Bounds Mode`, `Anchor Base Point`).
    - Selecting a previously aligned layer automatically restores and reflects its alignment settings in the UI.
 
-5. **Quick 3x3 Preset Visual Matrix**:
+4. **Quick 3x3 Preset Visual Matrix**:
    - Dedicated 9-button grid (`Top-Left`, `Center`, `Bot-Right`, etc.) for one-click alignment.
 
-6. **Dual Execution Modes**:
+5. **Dual Execution Modes**:
    - **Live Dynamic Expressions**: Anchor point and position remain continuously reactive to text edits, font size changes, and content resizing.
    - **One-Time Static Bake**: Instantly applies static coordinates without active expressions running in the timeline.
 
@@ -50,7 +45,7 @@ Moving an anchor point natively in After Effects shifts the layer's visual posit
 ```text
 ┌────────────────────────────────────────────────────────┐
 │ ⚓ AE ALIGN ANCHOR POINT v1.1.0                         │
-│ Zero-Shift Anchor Aligner with State Effect & Reticle  │
+│ Zero-Shift Anchor Aligner with State Effect            │
 ├────────────────────────────────────────────────────────┤
 │ Target Selection:                                      │
 │ 'Title_Text' [Text Layer, Anchor: 230, 90]             │
@@ -70,15 +65,10 @@ Moving an anchor point natively in After Effects shifts the layer's visual posit
 │ [ Mid-Left   ]  [ Center     ]  [ Mid-Right   ]        │
 │ [ Bot-Left   ]  [ Bot-Center ]  [ Bot-Right   ]        │
 ├────────────────────────────────────────────────────────┤
-│ Anchor Cross Indicator (Child Layer at [0, 0]):        │
-│ [x] Enable Child Crosshair Reticle                     │
-│ [x] Guide Layer (non-renderable in exports)            │
-│ Size (px): [ 30 ]  Color: [ Cyan                    ▼] │
-├────────────────────────────────────────────────────────┤
 │ Execution Mode:                                        │
 │ (•) Live Dynamic Expressions  ( ) One-Time Static Bake │
-│ [ ⚓ Align Anchor Point (Keep Content in Place)       ] │
-│ [ ✕ Remove Crosshairs & Expressions                  ] │
+│ [ ⚓ Align Anchor Point (Zero Visual Shift)           ] │
+│ [ ✕ Clear Expressions                                ] │
 │ Ready.                                                 │
 │ GitHub: work2survive/AE-Align-AnchorPoint              │
 └────────────────────────────────────────────────────────┘
@@ -125,25 +115,6 @@ const r = sourceRectAtTime(time, false);
 const s = [transform.scale[0] / 100, transform.scale[1] / 100];
 value + [r.left * s[0], r.top * s[1]];
 ```
-
----
-
-## 🎯 The Vector Crosshair Reticle & Child Layer Mechanics
-
-In After Effects, parenting child layers introduces a crucial coordinate property:
-> **The origin `[0, 0]` of a child layer in parent space is located at the parent layer's Anchor Point, NOT its top-left corner.**
-
-When layer $B$ is parented to layer $A$ ($B.\text{parent} = A$):
-$$\mathbf{X}_{B,\text{comp}} = \mathbf{P}_A + \mathbf{R}_A \cdot \mathbf{S}_A \cdot (\mathbf{P}_B - \mathbf{A}_A) + \dots$$
-When $B$'s local position is explicitly set to $[0, 0]$ and $B$'s anchor point is $[0, 0]$:
-$$\mathbf{X}_{B,\text{comp}} = \mathbf{P}_A$$
-Because $\mathbf{P}_A$ is the screen position of layer $A$'s anchor point, layer $B$ is physically pinned to layer $A$'s anchor point under all scales, rotations, and animations.
-
-### Why `guideLayer = true` Matters
-Setting `crossLayer.guideLayer = true`:
-1. Renders the reticle directly in the active After Effects composition viewer so the motion designer can see the anchor pivot in real time.
-2. Marks the layer with a hash icon (`#`) in the timeline.
-3. Automatically suppresses the layer during final rendering in the Render Queue, Adobe Media Encoder, and when the composition is nested as a precomp into other compositions.
 
 ---
 
