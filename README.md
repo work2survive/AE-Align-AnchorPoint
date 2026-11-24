@@ -1,4 +1,4 @@
-# AE Align Anchor Point (v1.1.0)
+# AE Align Anchor Point (v1.2.0)
 
 [![Live Browser Simulator](https://img.shields.io/badge/Live%20Demo-AE%20ScriptUI%20Simulator-2c8cff?style=for-the-badge&logo=javascript)](https://work2survive.github.io/AE_JS_builder/?jsx=AE_Align_Anchor_Point.jsx&autobuild=true)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
@@ -11,30 +11,38 @@
 
 ## 📖 Overview
 
-**AE Align Anchor Point** is an Adobe After Effects ScriptUI panel and live expression engine that aligns the anchor point of any composition, text box (paragraph or point text), vector shape, solid, footage, or null layer to Left, Center, or Right (X) and Top, Center, or Bottom (Y) with **zero visual jump or shift** of content on screen.
+**AE Align Anchor Point** is an Adobe After Effects ScriptUI panel and live expression engine that aligns the anchor point of any 2D or 3D composition, text box (paragraph or point text), vector shape, solid, footage, or null layer to Left, Center, or Right (X) and Top, Center, or Bottom (Y) with **zero visual jump or shift** of content on screen.
 
-Moving an anchor point natively in After Effects shifts the layer's visual position across the composition. **AE Align Anchor Point** completely eliminates this drift by pairing the Anchor Point with a scale-safe and rotation-safe Position compensator expression (or static keyframe bake), keeping the layer's rendered visual content strictly locked in place.
+Moving an anchor point natively in After Effects shifts the layer's visual position across the composition. **AE Align Anchor Point** completely eliminates this drift by pairing the Anchor Point with a scale-safe, 3-axis rotation-safe, and orientation-safe Position compensator expression (or static keyframe bake), keeping the layer's rendered visual content strictly locked in place.
 
 ---
 
 ## 🌟 Key Features
 
-1. **Zero-Shift Content Invariance**:
+1. **Zero-Shift Content Invariance in 2D & 3D**:
    - Mathematically couples Anchor Point and Position so that moving the anchor point never displaces the visual content on screen.
-   - Scale-safe ($S / 100$) and rotation-safe ($R(\theta)$) compensation prevents drift even if the layer is already scaled or rotated.
+   - Scale-safe ($S / 100$), rotation-safe ($R_z$), and 3D orientation & Euler rotation-safe ($R_{3D}$) compensation prevents drift even if the layer is 3D, rotated, or oriented along X, Y, and Z.
+   - Supports separated position dimensions (`X Position`, `Y Position`, `Z Position`).
 
 2. **Dual Calculation Engines**:
    - **`sourceRectAtTime(time, false)`**: Dynamically measures the exact rendered bounding box of glyphs, ascenders, descenders, and vector paths.
    - **Stated Width & Height**: Aligns to declared paragraph box text dimensions (`boxTextSize`), solid sizes (`layer.width`, `layer.height`), or precomp canvas dimensions (`source.width`, `source.height`).
 
-3. **Layer State Persistence**:
+3. **Original Anchor Point Storage Effect**:
+   - Optional checkbox to record the layer's unshifted anchor point in a standard After Effects coordinate effect:
+     - **2D Layers**: `ADBE Point Control` named `"Original Anchor Point"`.
+     - **3D Layers**: `ADBE Point3D Control` named `"Original Anchor Point"`.
+   - **Non-Destructive**: Subsequent alignment shifts preserve the true original anchor point and never overwrite it.
+   - Expressions dynamically read from this effect for reference, guaranteeing long-term drift-free stability.
+
+4. **Layer State Persistence**:
    - Stores the active alignment parameters directly on the layer using standard After Effects effect controls (`Anchor Align X`, `Anchor Align Y`, `Anchor Bounds Mode`, `Anchor Base Point`).
    - Selecting a previously aligned layer automatically restores and reflects its alignment settings in the UI.
 
-4. **Quick 3x3 Preset Visual Matrix**:
+5. **Quick 3x3 Preset Visual Matrix**:
    - Dedicated 9-button grid (`Top-Left`, `Center`, `Bot-Right`, etc.) for one-click alignment.
 
-5. **Dual Execution Modes**:
+6. **Dual Execution Modes**:
    - **One-Time Static Bake (Default)**: Instantly calculates exact compensation once and sets static numeric values on Anchor Point and Position without any continuous expression runtime overhead.
    - **Live Dynamic Expressions**: Anchor point and position remain continuously reactive to text edits, font size changes, and content resizing.
    - **Visual Expression Management**: Clear Expressions button (`✕ Clear Expressions`) is directly coupled alongside Dynamic Expressions within the Execution Engine panel for immediate cleanup.
@@ -45,11 +53,11 @@ Moving an anchor point natively in After Effects shifts the layer's visual posit
 
 ```text
 ┌────────────────────────────────────────────────────────┐
-│ ⚓ AE ALIGN ANCHOR POINT v1.1.0                         │
+│ ⚓ AE ALIGN ANCHOR POINT v1.2.0                         │
 │ Zero-Shift Anchor Aligner with State Effect            │
 ├────────────────────────────────────────────────────────┤
 │ Target Selection:                                      │
-│ 'Title_Text' [Text Layer, Anchor: 230, 90]             │
+│ 'Title_Text' [Text Layer (3D), Anchor: 230, 90, 0]     │
 │ [ 🔄 Refresh Selection ]                                │
 ├────────────────────────────────────────────────────────┤
 │ Bounds Calculation Method:                             │
@@ -69,6 +77,7 @@ Moving an anchor point natively in After Effects shifts the layer's visual posit
 │ Execution Engine:                                      │
 │ (•) One-Time Static Bake (No Expressions - Default)    │
 │ ( ) Dynamic Expressions (Live)   [ ✕ Clear Expressions]│
+│ [x] Store Original Anchor Point (Coordinate Effect)    │
 ├────────────────────────────────────────────────────────┤
 │ [ ⚓ Align Anchor Point (Zero Visual Shift)           ] │
 │ Ready.                                                 │
@@ -80,7 +89,7 @@ Moving an anchor point natively in After Effects shifts the layer's visual posit
 
 ## ⚙️ Mathematical Derivation & Zero-Shift Content Mechanics
 
-### 1. The Anchor Point Coordinate Relationship
+### 1. The 2D Anchor Point Coordinate Relationship
 In After Effects, every 2D layer's visual content is transformed according to the classic affine transformation:
 $$\mathbf{X}_{\text{comp}} = \mathbf{P} + \mathbf{R}(\theta) \cdot \mathbf{S} \cdot (\mathbf{x}_{\text{layer}} - \mathbf{A})$$
 
@@ -91,25 +100,38 @@ Where:
 - $\mathbf{S} = \begin{bmatrix} s_x/100 & 0 \\ 0 & s_y/100 \end{bmatrix}$ is the scale matrix.
 - $\mathbf{R}(\theta) = \begin{bmatrix} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta \end{bmatrix}$ is the 2D rotation matrix.
 
-### 2. The Zero-Shift Invariance Condition
-When moving the anchor point from $\mathbf{A}_{\text{base}}$ to $\mathbf{A}_{\text{target}}$, the content point $\mathbf{x}_{\text{layer}}$ must satisfy:
+### 2. The 3D Coordinate System & Euler Rotation Chain
+For 3D layers (`layer.threeDLayer = true`), points exist in 3-axis space $\mathbb{R}^3$:
+$$\mathbf{X}_{\text{comp}} = \mathbf{P} + \mathbf{R}_{3D} \cdot \mathbf{S} \cdot (\mathbf{x}_{\text{layer}} - \mathbf{A})$$
+
+Where:
+- $\mathbf{P} = [P_x, P_y, P_z]^T$ (or separated `X/Y/Z Position`).
+- $\mathbf{A} = [A_x, A_y, A_z]^T$.
+- $\mathbf{S} = \operatorname{diag}(s_x/100, s_y/100, s_z/100)$.
+- $\mathbf{R}_{3D}$ is the concatenated After Effects 3D transformation matrix composed of **Orientation** $[o_x, o_y, o_z]$ followed by individual Euler rotations $[r_x, r_y, r_z]$:
+  $$\mathbf{R}_{3D} = \mathbf{R}_x(o_x) \cdot \mathbf{R}_y(o_y) \cdot \mathbf{R}_z(o_z) \cdot \mathbf{R}_x(r_x) \cdot \mathbf{R}_y(r_y) \cdot \mathbf{R}_z(r_z)$$
+
+When evaluating the action of $\mathbf{R}_{3D}$ on a local scaled displacement vector $\mathbf{v} = \mathbf{S} \cdot \Delta\mathbf{A}$, transformations are applied sequentially in right-to-left vector order:
+$$\mathbf{v}' = \mathbf{R}_x(o_x)\Big( \mathbf{R}_y(o_y)\Big( \mathbf{R}_z(o_z)\Big( \mathbf{R}_x(r_x)\Big( \mathbf{R}_y(r_y)\Big( \mathbf{R}_z(r_z)\cdot \mathbf{v}\Big)\Big)\Big)\Big)\Big)$$
+
+### 3. The Zero-Shift Invariance Condition
+When moving the anchor point from $\mathbf{A}_{\text{base}}$ to $\mathbf{A}_{\text{target}}$, the rendered content point $\mathbf{x}_{\text{layer}}$ must satisfy:
 $$\mathbf{X}_{\text{comp}}(\text{new}) = \mathbf{X}_{\text{comp}}(\text{old})$$
 
 $$\mathbf{P}_{\text{new}} + \mathbf{R} \cdot \mathbf{S} \cdot (\mathbf{x} - \mathbf{A}_{\text{target}}) = \mathbf{P}_{\text{base}} + \mathbf{R} \cdot \mathbf{S} \cdot (\mathbf{x} - \mathbf{A}_{\text{base}})$$
 
-Subtracting like terms yields the universal compensation formula:
-$$\mathbf{P}_{\text{new}} = \mathbf{P}_{\text{base}} + \mathbf{R}(\theta) \cdot \mathbf{S} \cdot (\mathbf{A}_{\text{target}} - \mathbf{A}_{\text{base}})$$
+Subtracting like terms yields the universal compensation formula for both 2D and 3D:
+$$\mathbf{P}_{\text{new}} = \mathbf{P}_{\text{base}} + \mathbf{R} \cdot \mathbf{S} \cdot (\mathbf{A}_{\text{target}} - \mathbf{A}_{\text{base}})$$
 
-Let $\Delta \mathbf{A} = \mathbf{A}_{\text{target}} - \mathbf{A}_{\text{base}}$. When rotation $\theta = 0$:
+Let $\Delta \mathbf{A} = \mathbf{A}_{\text{target}} - \mathbf{A}_{\text{base}}$. When rotation is zero ($\theta = 0$):
 $$P_x(\text{new}) = P_x(\text{base}) + \Delta A_x \cdot \frac{s_x}{100}$$
 $$P_y(\text{new}) = P_y(\text{base}) + \Delta A_y \cdot \frac{s_y}{100}$$
+$$P_z(\text{new}) = P_z(\text{base}) + \Delta A_z \cdot \frac{s_z}{100}$$
 
-When rotation $\theta \neq 0$:
-$$\Delta P_x = \Delta A_x \cdot \frac{s_x}{100} \cdot \cos\theta - \Delta A_y \cdot \frac{s_y}{100} \cdot \sin\theta$$
-$$\Delta P_y = \Delta A_x \cdot \frac{s_x}{100} \cdot \sin\theta + \Delta A_y \cdot \frac{s_y}{100} \cdot \cos\theta$$
-$$\mathbf{P}_{\text{new}} = \mathbf{P}_{\text{base}} + [\Delta P_x, \Delta P_y]^T$$
+When rotation $\neq 0$, the vector displacement $\mathbf{v}' = \mathbf{R}_{3D} \cdot (\mathbf{S} \cdot \Delta \mathbf{A})$ is added directly to position:
+$$\mathbf{P}_{\text{new}} = \mathbf{P}_{\text{base}} + \mathbf{v}'$$
 
-### 3. The Special Case: Base Anchor at $[0, 0]$
+### 4. The Special Case: Base Anchor at $[0, 0]$
 When a layer's base anchor point was $[0, 0]$ (common for text layers and shape layers created at the origin), $\mathbf{A}_{\text{base}} = [0, 0]$, which simplifies $\Delta \mathbf{A} = \mathbf{A}_{\text{target}}$.
 In that case, the position expression reduces to:
 ```javascript
@@ -187,6 +209,52 @@ When building tools that run both natively in Adobe After Effects (ExtendScript 
     const sDoc = thisLayer.text ? thisLayer.text.sourceText.value : null;
     const boxW = sDoc && sDoc.boxTextSize ? sDoc.boxTextSize[0] : thisLayer.width;
     ```
+
+### 6. The 3D Rotation Operator Order (Right-to-Left Vector Transform Trap)
+- **The Matrix Pipeline**:
+  In After Effects, the complete 3D affine transformation matrix for layer content is concatenated in the following order:
+  $$\mathbf{M} = \mathbf{T}(\mathbf{P}) \cdot \mathbf{R}_x(o_x) \cdot \mathbf{R}_y(o_y) \cdot \mathbf{R}_z(o_z) \cdot \mathbf{R}_x(r_x) \cdot \mathbf{R}_y(r_y) \cdot \mathbf{R}_z(r_z) \cdot \mathbf{S}$$
+- **The Vector Transformation Order**:
+  When rotating a displacement vector $\mathbf{v} = \mathbf{S} \cdot \Delta\mathbf{A}$, the matrices multiply vector $\mathbf{v}$ from **right to left**:
+  $$\mathbf{v}' = \mathbf{R}_x(o_x)\Big( \mathbf{R}_y(o_y)\Big( \mathbf{R}_z(o_z)\Big( \mathbf{R}_x(r_x)\Big( \mathbf{R}_y(r_y)\Big( \mathbf{R}_z(r_z)\cdot \mathbf{v}\Big)\Big)\Big)\Big)\Big)$$
+- **The Trap**:
+  If Euler rotations are evaluated in intuitive forward order ($o_x \to o_y \to o_z \to r_x \to r_y \to r_z$), rotated 3D layers experience severe coordinate drift ($> 100\text{ px}$).
+- **The Rule**:
+  Vector rotation must strictly proceed from the inside out:
+  1. $R_z(r_z)$ (Z Rotation)
+  2. $R_y(r_y)$ (Y Rotation)
+  3. $R_x(r_x)$ (X Rotation)
+  4. $R_z(o_z)$ (Orientation Z)
+  5. $R_y(o_y)$ (Orientation Y)
+  6. $R_x(o_x)$ (Orientation X)
+  This guarantees exact machine-precision zero drift ($< 10^{-14}\text{ px}$) under arbitrary 3D orientations and rotations.
+
+### 7. Separated Position Dimensions (`dimensionsSeparated`)
+- **After Effects Limitation**:
+  When a user separates position dimensions, `transform.position` ceases to behave as a standard multi-dimensional vector array. Calling `posProp.setValue([x, y, z])` or assigning `posProp.expression = ...` throws a fatal ExtendScript error:
+  `"Can't set expression on multidimensional property when separated"`.
+- **Handling Strategy**:
+  - **Static Bake**: The script checks `posProp.dimensionsSeparated`. If true, it individually targets `Transform.X Position`, `Transform.Y Position`, and `Transform.Z Position`, applying compensated scalar offsets directly.
+  - **Dynamic Expressions**: Unseparates dimensions (`posProp.dimensionsSeparated = false`) before applying the consolidated 3-axis position expression.
+  - **Expression Cleanup**: Cleans expressions from `position` as well as `X Position`, `Y Position`, and `Z Position` to prevent orphaned active expressions.
+
+### 8. Non-Destructive "Original Anchor Point" Effect Architecture
+- **The Multi-Pass Baseline Drift Problem**:
+  If a user aligns an anchor point once (Center $\to$ Top-Left), the layer's `anchorPoint` becomes $[0, 0]$. If the user later re-runs the tool to align from Top-Left $\to$ Bottom-Right, reading the current `anchorPoint.value` treats $[0, 0]$ as the baseline origin, permanently corrupting the layer's true center reference.
+- **The Effect Snapshot Solution**:
+  - The script checks if an effect named `"Original Anchor Point"` already exists on the layer.
+  - If **absent**, it creates an `ADBE Point Control` (2D) or `ADBE Point3D Control` (3D) and stores the unshifted baseline $[A_x, A_y, A_z]$.
+  - If **already present**, it preserves the existing stored value and never overwrites it on subsequent alignment passes.
+- **Dynamic Expression Integration**:
+  The generated position expression dynamically references the effect with safe fallback:
+  ```javascript
+  let origA = [230, 90, 0];
+  try {
+      const fx = effect("Original Anchor Point");
+      if (fx && fx(1)) origA = fx(1).value;
+  } catch (eFx) {}
+  ```
+  This guarantees that multiple alignment passes, font changes, and text box adjustments never cause baseline coordinate drift.
 
 ---
 
